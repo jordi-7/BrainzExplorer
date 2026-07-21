@@ -1,5 +1,6 @@
 package com.jordigordillo.brainzexplorer.data.repository
 
+import com.jordigordillo.brainzexplorer.data.mapper.filterKnownArtists
 import com.jordigordillo.brainzexplorer.data.mapper.representativeImageUrl
 import com.jordigordillo.brainzexplorer.data.mapper.toDetail
 import com.jordigordillo.brainzexplorer.data.mapper.toSummary
@@ -77,6 +78,7 @@ class ArtistRepositoryImpl @Inject constructor(
             .onFailure { Timber.w(it, "Failed to search genre tag=%s", tag) }
             .getOrNull()
             ?.artists
+            ?.filterKnownArtists()
             ?.take(GENRE_SECTION_SIZE)
             .orEmpty()
 
