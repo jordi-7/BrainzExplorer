@@ -17,15 +17,26 @@ import javax.inject.Inject
 /**
  * MusicBrainz artists have no "image" of their own, so carousel artwork is resolved via a
  * representative release group's Cover Art Archive front image. Featured artists are looked up
- * directly with release-groups included (one call each); genre sections need one search call
- * plus one follow-up lookup per artist shown, to source that artist's image.
+ * directly with release-groups included (one call each); genre sections and user search results
+ * need one search call plus one follow-up lookup per artist shown, to source that artist's image.
  */
 class ArtistRepositoryImpl @Inject constructor(
     private val api: MusicBrainzApi,
 ) : ArtistRepository {
 
+    // A failed image lookup keeps the artist but falls back to no image, same as loadGenre.
     override suspend fun searchArtists(query: String): Result<List<ArtistSummary>> = runCatching {
-        api.searchArtists(query = query).artists.map { it.toSummary(imageUrl = null) }
+        coroutineScope {
+            api.searchArtists(query = query).artists.map { artistDto ->
+                async {
+                    val imageUrl = runCatching { api.lookupArtist(artistDto.id) }
+                        .onFailure { Timber.w(it, "Failed to load image for artist mbid=%s", artistDto.id) }
+                        .getOrNull()
+                        ?.representativeImageUrl()
+                    artistDto.toSummary(imageUrl)
+                }
+            }.awaitAll()
+        }
     }.onFailure { Timber.e(it, "Failed to search artists for query=%s", query) }
 
     override suspend fun getRecommendations(): Result<Recommendations> = runCatching {
