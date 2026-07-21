@@ -1,0 +1,319 @@
+package com.jordigordillo.brainzexplorer.ui.home
+
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SearchOff
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.jordigordillo.brainzexplorer.R
+import com.jordigordillo.brainzexplorer.domain.model.ArtistSummary
+import com.jordigordillo.brainzexplorer.ui.components.ArtistCarouselItem
+import com.jordigordillo.brainzexplorer.ui.components.ArtistCarouselItemSkeleton
+import com.jordigordillo.brainzexplorer.ui.components.ArtistResultRow
+import com.jordigordillo.brainzexplorer.ui.components.ArtistResultRowSkeleton
+import com.jordigordillo.brainzexplorer.ui.components.MessageState
+import com.jordigordillo.brainzexplorer.ui.components.SkeletonBox
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
+import androidx.compose.material3.carousel.rememberCarouselState
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
+import com.jordigordillo.brainzexplorer.ui.components.CollapsibleSearchField
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HomeScreen(
+    onArtistClick: (String, String) -> Unit,
+    viewModel: HomeViewModel = hiltViewModel(),
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    BackHandler(enabled = uiState.isSearchActive) {
+        viewModel.onSearchActiveChanged(false)
+    }
+
+    Scaffold(
+        contentWindowInsets = WindowInsets(0),
+        topBar = {
+            TopAppBar(
+                title = {
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        AnimatedVisibility(
+                            visible = !uiState.isSearchActive,
+                            enter = fadeIn(),
+                            exit = fadeOut(),
+                            modifier = Modifier.align(Alignment.CenterStart)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.app_name),
+                                style = MaterialTheme.typography.titleLarge
+                            )
+                        }
+                        CollapsibleSearchField(
+                            expanded = uiState.isSearchActive,
+                            query = uiState.searchQuery,
+                            onQueryChange = viewModel::onSearchQueryChanged,
+                            onExpandedChange = viewModel::onSearchActiveChanged,
+                            onSearch = viewModel::onSearchSubmit,
+                            modifier = Modifier.align(Alignment.CenterEnd).padding(end = 16.dp)
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    scrolledContainerColor = MaterialTheme.colorScheme.background
+                ),
+            )
+        }
+    ) { innerPadding ->
+        PullToRefreshBox(
+            isRefreshing = uiState.recommendationsState == RecommendationsState.Loading
+                    || uiState.searchState == SearchState.Loading,
+            onRefresh = viewModel::onRefresh,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            if (uiState.isSearchActive) {
+                SearchBody(
+                    searchState = uiState.searchState,
+                    onArtistClick = onArtistClick
+                )
+            } else {
+                RecommendationsBody(
+                    recommendationsState = uiState.recommendationsState,
+                    onArtistClick = onArtistClick
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RecommendationsBody(
+    recommendationsState: RecommendationsState,
+    onArtistClick: (String, String) -> Unit,
+) {
+    when (recommendationsState) {
+        is RecommendationsState.Loading -> {
+            LazyColumn(
+                userScrollEnabled = false,
+                contentPadding = contentPadding(),
+                verticalArrangement = Arrangement.spacedBy(40.dp),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                items(4) {
+                    CarouselSectionSkeleton()
+                }
+            }
+        }
+        is RecommendationsState.Error -> {
+            MessageState(
+                icon = Icons.Filled.ErrorOutline,
+                title = stringResource(R.string.load_error_title),
+                subtitle = stringResource(R.string.load_error_subtitle)
+            )
+        }
+        is RecommendationsState.Success -> {
+            val recommendations = recommendationsState.recommendations
+            LazyColumn(
+                contentPadding = contentPadding(),
+                verticalArrangement = Arrangement.spacedBy(40.dp),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                item {
+                    CarouselSection(
+                        title = stringResource(R.string.carousel_section_title_featured),
+                        artists = recommendations.featured,
+                        onArtistClick = onArtistClick
+                    )
+                }
+                item {
+                    CarouselSection(
+                        title = stringResource(R.string.carousel_section_title_rock),
+                        artists = recommendations.rock,
+                        onArtistClick = onArtistClick
+                    )
+                }
+                item {
+                    CarouselSection(
+                        title = stringResource(R.string.carousel_section_title_pop),
+                        artists = recommendations.pop,
+                        onArtistClick = onArtistClick
+                    )
+                }
+                item {
+                    CarouselSection(
+                        title = stringResource(R.string.carousel_section_title_electronic),
+                        artists = recommendations.electronic,
+                        onArtistClick = onArtistClick
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SearchBody(
+    searchState: SearchState,
+    onArtistClick: (String, String) -> Unit
+) {
+    when (searchState) {
+        is SearchState.Idle -> {
+            MessageState(
+                icon = Icons.Filled.Search,
+                title = stringResource(R.string.search_idle_title),
+                subtitle = stringResource(R.string.search_idle_subtitle)
+            )
+        }
+        is SearchState.Loading -> {
+            LazyColumn(
+                userScrollEnabled = false,
+                contentPadding = contentPadding(),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                items(6) { ArtistResultRowSkeleton() }
+            }
+        }
+        is SearchState.Empty -> {
+            MessageState(
+                icon = Icons.Filled.SearchOff,
+                title = stringResource(R.string.search_empty_title),
+                subtitle = stringResource(R.string.search_empty_subtitle)
+            )
+        }
+        is SearchState.Error -> {
+            MessageState(
+                icon = Icons.Filled.ErrorOutline,
+                title = stringResource(R.string.load_error_title),
+                subtitle = stringResource(R.string.load_error_subtitle)
+            )
+        }
+        is SearchState.Success -> {
+            LazyColumn(
+                contentPadding = contentPadding(),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                items(
+                    items = searchState.results,
+                    key = { it.id }
+                ) { artist ->
+                    ArtistResultRow(
+                        artist = artist,
+                        onClick = { onArtistClick(artist.id, artist.name) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun contentPadding() = PaddingValues(
+    top = 16.dp,
+    bottom = 16.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CarouselSection(
+    title: String,
+    artists: List<ArtistSummary>,
+    onArtistClick: (String, String) -> Unit
+) {
+    Column {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier
+                .padding(bottom = 12.dp)
+                .padding(horizontal = 16.dp)
+                .clip(RoundedCornerShape(24.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .padding(horizontal = 16.dp, vertical = 4.dp)
+        )
+        if (artists.isEmpty()) {
+            Text(
+                text = "No artists found for this section", // todo replace with better placeholder
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 20.dp)
+            )
+            return
+        }
+        val carouselState = rememberCarouselState { artists.size }
+        HorizontalMultiBrowseCarousel(
+            state = carouselState,
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            preferredItemWidth = 150.dp,
+            itemSpacing = 4.dp,
+            modifier = Modifier.fillMaxWidth()
+        ) { index ->
+            val artist = artists[index]
+            ArtistCarouselItem(
+                artist = artist,
+                onClick = { onArtistClick(artist.id, artist.name) },
+                modifier = Modifier.maskClip(RoundedCornerShape(24.dp))
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CarouselSectionSkeleton() {
+    Column {
+        SkeletonBox(
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 12.dp)
+                .height(40.dp)
+                .fillMaxWidth(0.3f),
+            shape = RoundedCornerShape(24.dp)
+        )
+        val carouselState = rememberCarouselState { 6 }
+        HorizontalMultiBrowseCarousel(
+            userScrollEnabled = false,
+            state = carouselState,
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            preferredItemWidth = 150.dp,
+            itemSpacing = 4.dp,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            ArtistCarouselItemSkeleton(Modifier.maskClip(RoundedCornerShape(24.dp)))
+        }
+    }
+}

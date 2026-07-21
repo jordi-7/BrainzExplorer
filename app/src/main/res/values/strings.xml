@@ -1,3 +1,20 @@
 <resources>
-    <string name="app_name">Brainz Explorer</string>
+    <string name="app_name" translatable="false">Brainz Explorer</string>
+
+    <string name="search_placeholder">Search artists</string>
+    <string name="search_close_content_description">Close search</string>
+    <string name="search_submit_content_description">Submit search</string>
+    <string name="search_topbar_content_description">Submit search</string>
+    <string name="search_idle_title">Search for an artist</string>
+    <string name="search_idle_subtitle">Type a name and hit search</string>
+    <string name="search_empty_title">No results found</string>
+    <string name="search_empty_subtitle">Try a different artist name</string>
+
+    <string name="load_error_title">Something went wrong</string>
+    <string name="load_error_subtitle">Try again later</string>
+
+    <string name="carousel_section_title_featured">Featured Artists</string>
+    <string name="carousel_section_title_rock">Rock</string>
+    <string name="carousel_section_title_pop">Pop</string>
+    <string name="carousel_section_title_electronic">Electronic</string>
 </resources>
