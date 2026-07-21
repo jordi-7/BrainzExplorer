@@ -54,9 +54,10 @@ import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
 import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import com.jordigordillo.brainzexplorer.domain.model.Recommendations
 import com.jordigordillo.brainzexplorer.ui.components.CollapsibleSearchField
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onArtistClick: (String, String) -> Unit,
@@ -64,8 +65,30 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    HomeScreenContent(
+        uiState = uiState,
+        onSearchActiveChanged = viewModel::onSearchActiveChanged,
+        onSearchQueryChanged = viewModel::onSearchQueryChanged,
+        onSearchSubmit = viewModel::onSearchSubmit,
+        onArtistTypeFilterToggled = viewModel::onArtistTypeFilterToggled,
+        onRefresh = viewModel::onRefresh,
+        onArtistClick = onArtistClick
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun HomeScreenContent(
+    uiState: HomeUiState,
+    onSearchActiveChanged: (Boolean) -> Unit,
+    onSearchQueryChanged: (String) -> Unit,
+    onSearchSubmit: () -> Unit,
+    onArtistTypeFilterToggled: (ArtistType) -> Unit,
+    onRefresh: () -> Unit,
+    onArtistClick: (String, String) -> Unit
+) {
     BackHandler(enabled = uiState.isSearchActive) {
-        viewModel.onSearchActiveChanged(false)
+        onSearchActiveChanged(false)
     }
 
     Scaffold(
@@ -88,9 +111,9 @@ fun HomeScreen(
                         CollapsibleSearchField(
                             expanded = uiState.isSearchActive,
                             query = uiState.searchQuery,
-                            onQueryChange = viewModel::onSearchQueryChanged,
-                            onExpandedChange = viewModel::onSearchActiveChanged,
-                            onSearch = viewModel::onSearchSubmit,
+                            onQueryChange = onSearchQueryChanged,
+                            onExpandedChange = onSearchActiveChanged,
+                            onSearch = onSearchSubmit,
                             modifier = Modifier.align(Alignment.CenterEnd).padding(end = 16.dp)
                         )
                     }
@@ -98,14 +121,14 @@ fun HomeScreen(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                     scrolledContainerColor = MaterialTheme.colorScheme.background
-                ),
+                )
             )
         }
     ) { innerPadding ->
         PullToRefreshBox(
             isRefreshing = uiState.recommendationsState == RecommendationsState.Loading
                     || uiState.searchState == SearchState.Loading,
-            onRefresh = viewModel::onRefresh,
+            onRefresh = onRefresh,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
@@ -114,7 +137,7 @@ fun HomeScreen(
                 SearchBody(
                     searchState = uiState.searchState,
                     selectedTypes = uiState.selectedArtistTypes,
-                    onTypeToggle = viewModel::onArtistTypeFilterToggled,
+                    onTypeToggle = onArtistTypeFilterToggled,
                     onArtistClick = onArtistClick
                 )
             } else {
@@ -368,4 +391,83 @@ private fun CarouselSectionSkeleton() {
             ArtistCarouselItemSkeleton(Modifier.maskClip(RoundedCornerShape(24.dp)))
         }
     }
+}
+
+private val previewArtists = listOf(
+    ArtistSummary(id = "1", name = "Architects", disambiguation = "British metal band", imageUrl = null),
+    ArtistSummary(id = "2", name = "Silent Planet", disambiguation = null, imageUrl = null),
+    ArtistSummary(id = "3", name = "Bad Omens", disambiguation = null, imageUrl = null),
+)
+
+@Preview(showBackground = true)
+@Composable
+private fun HomeScreenRecommendationsLoadedPreview() {
+    HomeScreenContent(
+        uiState = HomeUiState(
+            recommendationsState = RecommendationsState.Success(
+                Recommendations(
+                    featured = previewArtists,
+                    rock = previewArtists,
+                    pop = previewArtists,
+                    electronic = previewArtists
+                )
+            )
+        ),
+        onSearchActiveChanged = {},
+        onSearchQueryChanged = {},
+        onSearchSubmit = {},
+        onArtistTypeFilterToggled = {},
+        onRefresh = {},
+        onArtistClick = { _, _ -> }
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun HomeScreenRecommendationsLoadingPreview() {
+    HomeScreenContent(
+        uiState = HomeUiState(recommendationsState = RecommendationsState.Loading),
+        onSearchActiveChanged = {},
+        onSearchQueryChanged = {},
+        onSearchSubmit = {},
+        onArtistTypeFilterToggled = {},
+        onRefresh = {},
+        onArtistClick = { _, _ -> }
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun HomeScreenSearchLoadedPreview() {
+    HomeScreenContent(
+        uiState = HomeUiState(
+            isSearchActive = true,
+            searchQuery = "silent",
+            searchState = SearchState.Success(previewArtists)
+        ),
+        onSearchActiveChanged = {},
+        onSearchQueryChanged = {},
+        onSearchSubmit = {},
+        onArtistTypeFilterToggled = {},
+        onRefresh = {},
+        onArtistClick = { _, _ -> }
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun HomeScreenSearchLoadingPreview() {
+    HomeScreenContent(
+        uiState = HomeUiState(
+            isSearchActive = true,
+            searchQuery = "silent",
+            searchState = SearchState.Loading
+        ),
+        onSearchActiveChanged = {},
+        onSearchQueryChanged = {},
+        onSearchSubmit = {},
+        onArtistTypeFilterToggled = {},
+        onRefresh = {},
+        onArtistClick = { _, _ -> }
+    )
 }
