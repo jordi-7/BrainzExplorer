@@ -10,6 +10,11 @@
     <string name="search_empty_title">No results found</string>
     <string name="search_empty_subtitle">Try a different artist name</string>
 
+    <string name="filter_type_person">Person</string>
+    <string name="filter_type_group">Group</string>
+    <string name="filter_type_orchestra">Orchestra</string>
+    <string name="filter_type_choir">Choir</string>
+
     <string name="load_error_title">Something went wrong</string>
     <string name="load_error_subtitle">Try again later</string>
 

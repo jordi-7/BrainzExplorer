@@ -1,11 +1,13 @@
 package com.jordigordillo.brainzexplorer.ui.home
 
 import com.jordigordillo.brainzexplorer.domain.model.ArtistSummary
+import com.jordigordillo.brainzexplorer.domain.model.ArtistType
 import com.jordigordillo.brainzexplorer.domain.model.Recommendations
 
 data class HomeUiState(
     val isSearchActive: Boolean = false,
     val searchQuery: String = "",
+    val selectedArtistTypes: Set<ArtistType> = emptySet(),
     val searchState: SearchState = SearchState.Idle,
     val recommendationsState: RecommendationsState = RecommendationsState.Loading
 )

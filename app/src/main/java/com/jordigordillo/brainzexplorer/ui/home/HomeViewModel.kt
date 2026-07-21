@@ -2,6 +2,7 @@ package com.jordigordillo.brainzexplorer.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.jordigordillo.brainzexplorer.domain.model.ArtistType
 import com.jordigordillo.brainzexplorer.domain.repository.ArtistRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,6 +33,7 @@ class HomeViewModel @Inject constructor(
                 it.copy(
                     isSearchActive = false,
                     searchQuery = "",
+                    selectedArtistTypes = emptySet(),
                     searchState = SearchState.Idle
                 )
             }
@@ -42,16 +44,26 @@ class HomeViewModel @Inject constructor(
         _uiState.update { it.copy(searchQuery = query) }
     }
 
+    fun onArtistTypeFilterToggled(type: ArtistType) {
+        _uiState.update { current ->
+            val types = current.selectedArtistTypes
+            current.copy(
+                selectedArtistTypes = if (type in types) types - type else types + type
+            )
+        }
+    }
+
     fun onSearchSubmit() {
         val query = _uiState.value.searchQuery.trim()
         if (query.isEmpty()) return
 
-        Timber.d("Search submitted for query=%s", query)
+        val types = _uiState.value.selectedArtistTypes
+        Timber.d("Search submitted for query=%s, types=%s", query, types)
 
         viewModelScope.launch {
             _uiState.update { it.copy(searchState = SearchState.Loading) }
 
-            val result = repository.searchArtists(query)
+            val result = repository.searchArtists(query, types)
             _uiState.update { current ->
                 current.copy(
                     searchState = result.fold(

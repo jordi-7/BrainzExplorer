@@ -5,10 +5,12 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,11 +20,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -38,6 +42,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jordigordillo.brainzexplorer.R
 import com.jordigordillo.brainzexplorer.domain.model.ArtistSummary
+import com.jordigordillo.brainzexplorer.domain.model.ArtistType
 import com.jordigordillo.brainzexplorer.ui.components.ArtistCarouselItem
 import com.jordigordillo.brainzexplorer.ui.components.ArtistCarouselItemSkeleton
 import com.jordigordillo.brainzexplorer.ui.components.ArtistResultRow
@@ -55,7 +60,7 @@ import com.jordigordillo.brainzexplorer.ui.components.CollapsibleSearchField
 @Composable
 fun HomeScreen(
     onArtistClick: (String, String) -> Unit,
-    viewModel: HomeViewModel = hiltViewModel(),
+    viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -108,6 +113,8 @@ fun HomeScreen(
             if (uiState.isSearchActive) {
                 SearchBody(
                     searchState = uiState.searchState,
+                    selectedTypes = uiState.selectedArtistTypes,
+                    onTypeToggle = viewModel::onArtistTypeFilterToggled,
                     onArtistClick = onArtistClick
                 )
             } else {
@@ -129,7 +136,10 @@ private fun RecommendationsBody(
         is RecommendationsState.Loading -> {
             LazyColumn(
                 userScrollEnabled = false,
-                contentPadding = contentPadding(),
+                contentPadding = PaddingValues(
+                    top = 16.dp,
+                    bottom = 16.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                ),
                 verticalArrangement = Arrangement.spacedBy(40.dp),
                 modifier = Modifier.fillMaxSize()
             ) {
@@ -148,7 +158,10 @@ private fun RecommendationsBody(
         is RecommendationsState.Success -> {
             val recommendations = recommendationsState.recommendations
             LazyColumn(
-                contentPadding = contentPadding(),
+                contentPadding = PaddingValues(
+                    top = 16.dp,
+                    bottom = 16.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                ),
                 verticalArrangement = Arrangement.spacedBy(40.dp),
                 modifier = Modifier.fillMaxSize()
             ) {
@@ -188,52 +201,69 @@ private fun RecommendationsBody(
 @Composable
 private fun SearchBody(
     searchState: SearchState,
+    selectedTypes: Set<ArtistType>,
+    onTypeToggle: (ArtistType) -> Unit,
     onArtistClick: (String, String) -> Unit
 ) {
-    when (searchState) {
-        is SearchState.Idle -> {
-            MessageState(
-                icon = Icons.Filled.Search,
-                title = stringResource(R.string.search_idle_title),
-                subtitle = stringResource(R.string.search_idle_subtitle)
-            )
-        }
-        is SearchState.Loading -> {
-            LazyColumn(
-                userScrollEnabled = false,
-                contentPadding = contentPadding(),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(6) { ArtistResultRowSkeleton() }
-            }
-        }
-        is SearchState.Empty -> {
-            MessageState(
-                icon = Icons.Filled.SearchOff,
-                title = stringResource(R.string.search_empty_title),
-                subtitle = stringResource(R.string.search_empty_subtitle)
-            )
-        }
-        is SearchState.Error -> {
-            MessageState(
-                icon = Icons.Filled.ErrorOutline,
-                title = stringResource(R.string.load_error_title),
-                subtitle = stringResource(R.string.load_error_subtitle)
-            )
-        }
-        is SearchState.Success -> {
-            LazyColumn(
-                contentPadding = contentPadding(),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(
-                    items = searchState.results,
-                    key = { it.id }
-                ) { artist ->
-                    ArtistResultRow(
-                        artist = artist,
-                        onClick = { onArtistClick(artist.id, artist.name) }
+    Column(modifier = Modifier.fillMaxSize()) {
+        ArtistTypeFilterRow(
+            selectedTypes = selectedTypes,
+            onTypeToggle = onTypeToggle,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+        Box(modifier = Modifier.weight(1f)) {
+            when (searchState) {
+                is SearchState.Idle -> {
+                    MessageState(
+                        icon = Icons.Filled.Search,
+                        title = stringResource(R.string.search_idle_title),
+                        subtitle = stringResource(R.string.search_idle_subtitle)
                     )
+                }
+                is SearchState.Loading -> {
+                    LazyColumn(
+                        userScrollEnabled = false,
+                        contentPadding = PaddingValues(
+                            top = 4.dp,
+                            bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                        ),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(20) { ArtistResultRowSkeleton() }
+                    }
+                }
+                is SearchState.Empty -> {
+                    MessageState(
+                        icon = Icons.Filled.SearchOff,
+                        title = stringResource(R.string.search_empty_title),
+                        subtitle = stringResource(R.string.search_empty_subtitle)
+                    )
+                }
+                is SearchState.Error -> {
+                    MessageState(
+                        icon = Icons.Filled.ErrorOutline,
+                        title = stringResource(R.string.load_error_title),
+                        subtitle = stringResource(R.string.load_error_subtitle)
+                    )
+                }
+                is SearchState.Success -> {
+                    LazyColumn(
+                        contentPadding = PaddingValues(
+                            top = 4.dp,
+                            bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                        ),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(
+                            items = searchState.results,
+                            key = { it.id }
+                        ) { artist ->
+                            ArtistResultRow(
+                                artist = artist,
+                                onClick = { onArtistClick(artist.id, artist.name) }
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -241,10 +271,32 @@ private fun SearchBody(
 }
 
 @Composable
-private fun contentPadding() = PaddingValues(
-    top = 16.dp,
-    bottom = 16.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-)
+private fun ArtistTypeFilterRow(
+    selectedTypes: Set<ArtistType>,
+    onTypeToggle: (ArtistType) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        ArtistType.entries.forEach { type ->
+            FilterChip(
+                selected = type in selectedTypes,
+                onClick = { onTypeToggle(type) },
+                label = { Text(stringResource(type.labelRes())) },
+                shape = RoundedCornerShape(16.dp)
+            )
+        }
+    }
+}
+
+private fun ArtistType.labelRes(): Int = when (this) {
+    ArtistType.PERSON -> R.string.filter_type_person
+    ArtistType.GROUP -> R.string.filter_type_group
+    ArtistType.ORCHESTRA -> R.string.filter_type_orchestra
+    ArtistType.CHOIR -> R.string.filter_type_choir
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

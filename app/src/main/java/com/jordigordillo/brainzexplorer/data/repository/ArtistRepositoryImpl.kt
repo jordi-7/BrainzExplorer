@@ -7,6 +7,7 @@ import com.jordigordillo.brainzexplorer.data.mapper.toSummary
 import com.jordigordillo.brainzexplorer.data.remote.MusicBrainzApi
 import com.jordigordillo.brainzexplorer.domain.model.ArtistDetail
 import com.jordigordillo.brainzexplorer.domain.model.ArtistSummary
+import com.jordigordillo.brainzexplorer.domain.model.ArtistType
 import com.jordigordillo.brainzexplorer.domain.model.Recommendations
 import com.jordigordillo.brainzexplorer.domain.repository.ArtistRepository
 import kotlinx.coroutines.async
@@ -26,9 +27,12 @@ class ArtistRepositoryImpl @Inject constructor(
 ) : ArtistRepository {
 
     // A failed image lookup keeps the artist but falls back to no image, same as loadGenre.
-    override suspend fun searchArtists(query: String): Result<List<ArtistSummary>> = runCatching {
+    override suspend fun searchArtists(
+        query: String,
+        types: Set<ArtistType>
+    ): Result<List<ArtistSummary>> = runCatching {
         coroutineScope {
-            api.searchArtists(query = query).artists.map { artistDto ->
+            api.searchArtists(query = buildQuery(query, types)).artists.map { artistDto ->
                 async {
                     val imageUrl = runCatching { api.lookupArtist(artistDto.id) }
                         .onFailure { Timber.w(it, "Failed to load image for artist mbid=%s", artistDto.id) }
@@ -39,6 +43,13 @@ class ArtistRepositoryImpl @Inject constructor(
             }.awaitAll()
         }
     }.onFailure { Timber.e(it, "Failed to search artists for query=%s", query) }
+
+    private fun buildQuery(query: String, types: Set<ArtistType>): String =
+        if (types.isEmpty()) {
+            query
+        } else {
+            "$query AND (${types.joinToString(" OR ") { "type:${it.mbValue}" }})"
+        }
 
     override suspend fun getRecommendations(): Result<Recommendations> = runCatching {
         // Load all four sections concurrently rather than sequentially.
