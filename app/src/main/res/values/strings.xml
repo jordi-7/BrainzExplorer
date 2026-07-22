@@ -49,4 +49,5 @@
     <string name="carousel_section_title_rock">Rock</string>
     <string name="carousel_section_title_pop">Pop</string>
     <string name="carousel_section_title_electronic">Electronic</string>
+    <string name="carousel_results_empty">No artists found for this section</string>
 </resources>

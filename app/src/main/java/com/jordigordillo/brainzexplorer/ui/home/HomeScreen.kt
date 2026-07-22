@@ -340,7 +340,7 @@ private fun CarouselSection(
         )
         if (artists.isEmpty()) {
             Text(
-                text = "No artists found for this section", // todo replace with better placeholder
+                text = stringResource(R.string.carousel_results_empty),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 20.dp)
