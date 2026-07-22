@@ -7,13 +7,40 @@
     <string name="search_topbar_content_description">Submit search</string>
     <string name="search_idle_title">Search for an artist</string>
     <string name="search_idle_subtitle">Type a name and hit search</string>
-    <string name="search_empty_title">No results found</string>
+    <string name="search_empty_title">No artists found</string>
     <string name="search_empty_subtitle">Try a different artist name</string>
 
     <string name="filter_type_person">Person</string>
     <string name="filter_type_group">Group</string>
     <string name="filter_type_orchestra">Orchestra</string>
     <string name="filter_type_choir">Choir</string>
+
+    <string name="filter_type_album">Album</string>
+    <string name="filter_type_single">Single</string>
+    <string name="filter_type_ep">EP</string>
+    <string name="filter_type_broadcast">Broadcast</string>
+    <string name="filter_type_other">Other</string>
+    <string name="filter_type_audio_drama">Audio drama</string>
+    <string name="filter_type_audiobook">Audiobook</string>
+    <string name="filter_type_compilation">Compilation</string>
+    <string name="filter_type_demo">Demo</string>
+    <string name="filter_type_dj_mix">DJ-mix</string>
+    <string name="filter_type_field_recording">Field recording</string>
+    <string name="filter_type_interview">Interview</string>
+    <string name="filter_type_live">Live</string>
+    <string name="filter_type_mixtape_street">Mixtape/Street</string>
+    <string name="filter_type_remix">Remix</string>
+    <string name="filter_type_soundtrack">Soundtrack</string>
+    <string name="filter_type_spokenword">Spokenword</string>
+
+    <string name="sort_newest_first">Newest first</string>
+    <string name="sort_oldest_first">Oldest first</string>
+    <string name="release_groups_empty_title">No release groups found</string>
+    <string name="release_groups_empty_subtitle">Try a different filter</string>
+
+    <string name="detail_title_placeholder">Artist</string>
+    <string name="detail_back_content_description">Back</string>
+    <string name="detail_sort_content_description">Sort</string>
 
     <string name="load_error_title">Something went wrong</string>
     <string name="load_error_subtitle">Try again later</string>

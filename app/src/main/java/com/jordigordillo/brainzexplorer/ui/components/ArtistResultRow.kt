@@ -33,13 +33,16 @@ private val RESULT_ROW_IMAGE_SHAPE = RoundedCornerShape(16.dp)
 private val RESULT_ROW_IMAGE_SIZE = 48.dp
 
 @Composable
-fun ArtistResultRow(artist: ArtistSummary, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun ArtistResultRow(
+    artist: ArtistSummary,
+    onClick: () -> Unit, modifier: Modifier = Modifier
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 20.dp, vertical = 14.dp)
+            .padding(16.dp)
     ) {
         Box(
             modifier = Modifier
@@ -92,7 +95,7 @@ fun ArtistResultRowSkeleton(modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 14.dp),
+            .padding(horizontal = 20.dp, vertical = 14.dp)
     ) {
         SkeletonBox(
             modifier = Modifier.size(RESULT_ROW_IMAGE_SIZE),

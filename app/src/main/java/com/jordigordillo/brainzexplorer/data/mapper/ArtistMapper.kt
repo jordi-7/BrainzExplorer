@@ -47,5 +47,6 @@ fun ReleaseGroupDto.toDomain(): ReleaseGroup =
         id = id,
         title = title,
         primaryType = primaryType,
+        secondaryTypes = secondaryTypes,
         firstReleaseDate = firstReleaseDate,
     )

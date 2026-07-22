@@ -19,7 +19,9 @@ fun BrainzNavHost(navController: NavHostController = rememberNavController()) {
             )
         }
         composable<ArtistDetailRoute> {
-            
+            ArtistDetailScreen(
+                onBack = { navController.popBackStack() },
+            )
         }
     }
 }

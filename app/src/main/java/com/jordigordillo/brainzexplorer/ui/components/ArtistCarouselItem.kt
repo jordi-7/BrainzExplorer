@@ -98,7 +98,10 @@ fun ArtistCarouselItemSkeleton(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun ArtistInitialsAvatar(name: String, modifier: Modifier = Modifier) {
+fun ArtistInitialsAvatar(
+    name: String,
+    modifier: Modifier = Modifier
+) {
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -114,7 +117,7 @@ fun ArtistInitialsAvatar(name: String, modifier: Modifier = Modifier) {
     }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 private fun ArtistCarouselItemPreview() {
     ArtistCarouselItem(
@@ -124,7 +127,7 @@ private fun ArtistCarouselItemPreview() {
             disambiguation = null,
             imageUrl = null
         ),
-        modifier = Modifier.size(150.dp),
+        modifier = Modifier.padding(24.dp),
         onClick = {}
     )
 }

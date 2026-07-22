@@ -24,6 +24,8 @@ data class ReleaseGroupDto(
     val title: String,
     @SerialName("primary-type")
     val primaryType: String? = null,
+    @SerialName("secondary-types")
+    val secondaryTypes: List<String> = emptyList(),
     @SerialName("first-release-date")
     val firstReleaseDate: String? = null,
 )

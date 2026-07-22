@@ -5,12 +5,10 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,8 +17,8 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Search
@@ -231,8 +229,7 @@ private fun SearchBody(
     Column(modifier = Modifier.fillMaxSize()) {
         ArtistTypeFilterRow(
             selectedTypes = selectedTypes,
-            onTypeToggle = onTypeToggle,
-            modifier = Modifier.padding(horizontal = 16.dp)
+            onTypeToggle = onTypeToggle
         )
         Box(modifier = Modifier.weight(1f)) {
             when (searchState) {
@@ -299,11 +296,12 @@ private fun ArtistTypeFilterRow(
     onTypeToggle: (ArtistType) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = modifier.horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    LazyRow(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp)
     ) {
-        ArtistType.entries.forEach { type ->
+        items(ArtistType.entries) { type ->
             FilterChip(
                 selected = type in selectedTypes,
                 onClick = { onTypeToggle(type) },
@@ -407,7 +405,7 @@ private fun HomeScreenRecommendationsLoadedPreview() {
             recommendationsState = RecommendationsState.Success(
                 Recommendations(
                     featured = previewArtists,
-                    rock = previewArtists,
+                    rock = emptyList(),
                     pop = previewArtists,
                     electronic = previewArtists
                 )
